@@ -1,0 +1,20 @@
+# requirements.txt
+
+# For real cryptographic security (not in Python standard library)
+cryptography>=41.0.0
+
+# Optional: Enhanced GUI (already included in Python 3.x)
+# tkinter is built-in
+
+# Development and testing
+pytest>=7.0.0
+pylint>=2.17.0
+black>=23.0.0
+mypy>=1.5.0
+
+# Optional: Performance monitoring
+psutil>=5.9.0
+
+# Security scanning
+bandit>=1.7.5
+safety>=2.3.0
