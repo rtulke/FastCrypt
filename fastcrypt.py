@@ -13,7 +13,6 @@ Features:
 - Modern encryption: AES-256-GCM, ChaCha20-Poly1305
 - Digital signatures: RSA-PSS, Ed25519
 - Key exchange: ECDH-P256, ECDH-P384
-- Dark/Light themes
 - Cross-platform GUI with Tkinter
 - Memory-only operation (no persistent storage)
 - Email integration for encrypted messages
@@ -75,79 +74,6 @@ class KeyPair:
     private_key: bytes
     public_key: bytes
     algorithm: str
-
-
-class ThemeManager:
-    """Manages application themes"""
-    
-    def __init__(self, root):
-        self.root = root
-        self.style = ttk.Style()
-        self.is_dark = False
-        self.setup_themes()
-        
-    def setup_themes(self):
-        """Configure light and dark themes"""
-        # Light theme (default)
-        self.light_theme = {
-            'bg': '#ffffff',
-            'fg': '#000000',
-            'select_bg': '#0078d4',
-            'select_fg': '#ffffff',
-            'entry_bg': '#ffffff',
-            'entry_fg': '#000000',
-            'frame_bg': '#f0f0f0'
-        }
-        
-        # Dark theme
-        self.dark_theme = {
-            'bg': '#2d2d2d',
-            'fg': '#ffffff',
-            'select_bg': '#404040',
-            'select_fg': '#ffffff',
-            'entry_bg': '#404040',
-            'entry_fg': '#ffffff',
-            'frame_bg': '#353535'
-        }
-        
-    def toggle_theme(self):
-        """Toggle between light and dark theme"""
-        self.is_dark = not self.is_dark
-        self.apply_theme()
-        
-    def apply_theme(self):
-        """Apply current theme to all widgets"""
-        theme = self.dark_theme if self.is_dark else self.light_theme
-        
-        # Configure root window
-        self.root.configure(bg=theme['bg'])
-        
-        # Configure ttk styles
-        self.style.configure('TFrame', background=theme['bg'])
-        self.style.configure('TLabel', background=theme['bg'], foreground=theme['fg'])
-        self.style.configure('TLabelFrame', background=theme['bg'], foreground=theme['fg'])
-        self.style.configure('TButton', background=theme['frame_bg'], foreground=theme['fg'])
-        self.style.configure('TCombobox', fieldbackground=theme['entry_bg'], foreground=theme['fg'])
-        self.style.configure('TEntry', fieldbackground=theme['entry_bg'], foreground=theme['fg'])
-        
-        # Configure text widgets
-        for widget in self._find_text_widgets(self.root):
-            widget.configure(
-                bg=theme['entry_bg'],
-                fg=theme['fg'],
-                selectbackground=theme['select_bg'],
-                selectforeground=theme['select_fg'],
-                insertbackground=theme['fg']
-            )
-            
-    def _find_text_widgets(self, parent):
-        """Recursively find all text widgets"""
-        text_widgets = []
-        for child in parent.winfo_children():
-            if isinstance(child, (tk.Text, scrolledtext.ScrolledText)):
-                text_widgets.append(child)
-            text_widgets.extend(self._find_text_widgets(child))
-        return text_widgets
 
 
 class CryptoEngine:
@@ -520,7 +446,6 @@ class FastCrypt:
         
         # Initialize components
         self.crypto = CryptoEngine()
-        self.theme_manager = ThemeManager(self.root)
         
         # State variables
         self.current_keypair = None
@@ -528,7 +453,6 @@ class FastCrypt:
         
         self.setup_gui()
         self.setup_menu()
-        self.theme_manager.apply_theme()
         
     def setup_gui(self):
         """Setup the main GUI layout"""
@@ -551,23 +475,15 @@ class FastCrypt:
         encrypt_frame.rowconfigure(1, weight=1)
         encrypt_frame.rowconfigure(3, weight=1)
         
-        # Algorithm and password section
+        # Algorithm selection
         control_frame = ttk.Frame(encrypt_frame)
         control_frame.grid(row=0, column=0, columnspan=4, sticky=(tk.W, tk.E), pady=(0, 10))
-        control_frame.columnconfigure(1, weight=1)
         
-        ttk.Label(control_frame, text="Algorithm:").grid(row=0, column=0, sticky=tk.W, padx=(0, 5))
+        ttk.Label(control_frame, text="Encryption Algorithm:").grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
         self.algorithm_var = tk.StringVar(value=list(self.crypto.algorithms.keys())[0])
         algorithm_combo = ttk.Combobox(control_frame, textvariable=self.algorithm_var, 
-                                     values=list(self.crypto.algorithms.keys()), state="readonly", width=20)
-        algorithm_combo.grid(row=0, column=1, sticky=tk.W, padx=(0, 10))
-        
-        ttk.Label(control_frame, text="Password:").grid(row=0, column=2, sticky=tk.W, padx=(0, 5))
-        self.password_var = tk.StringVar()
-        password_entry = ttk.Entry(control_frame, textvariable=self.password_var, show="*", width=15)
-        password_entry.grid(row=0, column=3, sticky=(tk.W, tk.E), padx=(0, 10))
-        
-        ttk.Button(control_frame, text="Generate Password", command=self.generate_strong_password, width=15).grid(row=0, column=4)
+                                     values=list(self.crypto.algorithms.keys()), state="readonly", width=25)
+        algorithm_combo.grid(row=0, column=1, sticky=tk.W)
         
         # Input text area
         input_frame = ttk.LabelFrame(encrypt_frame, text="Input Text", padding="5")
@@ -740,11 +656,6 @@ class FastCrypt:
         edit_menu.add_command(label="Clear Input", command=lambda: self.input_text.delete(1.0, tk.END))
         edit_menu.add_command(label="Clear Output", command=lambda: self.output_text.delete(1.0, tk.END))
         
-        # View menu
-        view_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="View", menu=view_menu)
-        view_menu.add_command(label="Toggle Dark Mode", command=self.toggle_theme)
-        
         # Tools menu
         tools_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=tools_menu)
@@ -760,10 +671,6 @@ class FastCrypt:
         help_menu.add_command(label="Help", command=self.show_help)
         help_menu.add_command(label="About", command=self.show_about)
         
-    # Theme methods
-    def toggle_theme(self):
-        """Toggle between light and dark theme"""
-        self.theme_manager.toggle_theme()
         
     # Encryption methods
     def update_char_count(self, event=None):
@@ -785,11 +692,11 @@ class FastCrypt:
             if not input_text:
                 messagebox.showwarning("Warning", "Please enter text to encrypt")
                 return
-                
-            password = self.password_var.get()
+            
+            # Get password with confirmation dialog
+            password = self.show_password_input_dialog(confirm_password=True)
             if not password:
-                messagebox.showwarning("Warning", "Please enter a password")
-                return
+                return  # User cancelled
                 
             algorithm = self.algorithm_var.get()
             cipher_func = self.crypto.algorithms[algorithm]
@@ -813,11 +720,11 @@ class FastCrypt:
             if not input_text:
                 messagebox.showwarning("Warning", "Please enter text to decrypt")
                 return
-                
-            password = self.password_var.get()
+            
+            # Get password (no confirmation needed for decryption)
+            password = self.show_password_input_dialog(confirm_password=False)
             if not password:
-                messagebox.showwarning("Warning", "Please enter a password")
-                return
+                return  # User cancelled
                 
             algorithm = self.algorithm_var.get()
             cipher_func = self.crypto.algorithms[algorithm]
@@ -830,6 +737,210 @@ class FastCrypt:
             
         except Exception as e:
             messagebox.showerror("Decryption Error", str(e))
+    
+    def show_password_input_dialog(self, confirm_password=True):
+        """Show password input dialog with optional confirmation"""
+        # Create custom dialog
+        dialog = tk.Toplevel(self.root)
+        if confirm_password:
+            dialog.title("Enter Password for Encryption")
+            dialog.geometry("400x250")
+        else:
+            dialog.title("Enter Password for Decryption")
+            dialog.geometry("400x180")
+            
+        dialog.resizable(False, False)
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Remove transparency and set solid background
+        dialog.configure(bg='#f0f0f0')
+        dialog.attributes('-alpha', 1.0)  # Ensure fully opaque
+        
+        # Center dialog on parent
+        x = self.root.winfo_rootx() + 100
+        y = self.root.winfo_rooty() + 100
+        dialog.geometry(f"+{x}+{y}")
+        
+        # Result variable
+        result_password = None
+        
+        # Main frame with padding
+        main_frame = ttk.Frame(dialog, padding="20")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        main_frame.configure(style='Solid.TFrame')  # Ensure solid background
+        
+        # Title
+        if confirm_password:
+            title_text = "🔐 Enter Password for Encryption"
+            subtitle_text = "Please enter your password twice for confirmation"
+        else:
+            title_text = "🔓 Enter Password for Decryption"
+            subtitle_text = "Please enter your password"
+            
+        title_label = ttk.Label(main_frame, text=title_text, 
+                               font=("TkDefaultFont", 12, "bold"), style='Solid.TLabel')
+        title_label.pack(pady=(0, 5))
+        
+        subtitle_label = ttk.Label(main_frame, text=subtitle_text, 
+                                  font=("TkDefaultFont", 9), style='Solid.TLabel')
+        subtitle_label.pack(pady=(0, 15))
+        
+        # Password fields
+        password_frame = ttk.Frame(main_frame, style='Solid.TFrame')
+        password_frame.pack(fill=tk.X, pady=(0, 15))
+        password_frame.columnconfigure(1, weight=1)
+        
+        # First password
+        ttk.Label(password_frame, text="Password:", style='Solid.TLabel').grid(row=0, column=0, sticky=tk.W, padx=(0, 10))
+        password1_var = tk.StringVar()
+        password1_entry = ttk.Entry(password_frame, textvariable=password1_var, show="*", width=25)
+        password1_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=(0, 10))
+        
+        # Show/hide toggle for first password
+        show_password1 = tk.BooleanVar(value=False)
+        def toggle_password1():
+            if show_password1.get():
+                # Currently showing, so hide it
+                password1_entry.configure(show="*")
+                toggle1_btn.configure(text="show")
+                show_password1.set(False)
+            else:
+                # Currently hidden, so show it
+                password1_entry.configure(show="")
+                toggle1_btn.configure(text="hide")
+                show_password1.set(True)
+        
+        toggle1_btn = ttk.Button(password_frame, text="show", width=3, command=toggle_password1)
+        toggle1_btn.grid(row=0, column=2, padx=(5, 0), pady=(0, 10))
+        
+        # Second password (only for encryption)
+        if confirm_password:
+            ttk.Label(password_frame, text="Confirm:", style='Solid.TLabel').grid(row=1, column=0, sticky=tk.W, padx=(0, 10))
+            password2_var = tk.StringVar()
+            password2_entry = ttk.Entry(password_frame, textvariable=password2_var, show="*", width=25)
+            password2_entry.grid(row=1, column=1, sticky=(tk.W, tk.E))
+            
+            # Show/hide toggle for second password
+            show_password2 = tk.BooleanVar(value=False)
+            def toggle_password2():
+                if show_password2.get():
+                    # Currently showing, so hide it
+                    password2_entry.configure(show="*")
+                    toggle2_btn.configure(text="show")
+                    show_password2.set(False)
+                else:
+                    # Currently hidden, so show it
+                    password2_entry.configure(show="")
+                    toggle2_btn.configure(text="hide")
+                    show_password2.set(True)
+            
+            toggle2_btn = ttk.Button(password_frame, text="show", width=3, command=toggle_password2)
+            toggle2_btn.grid(row=1, column=2, padx=(5, 0))
+        
+        # Password strength indicator (only for encryption)
+        if confirm_password:
+            strength_label = ttk.Label(main_frame, text="", font=("TkDefaultFont", 8), style='Solid.TLabel')
+            strength_label.pack(pady=(0, 10))
+            
+            def check_password_strength():
+                password = password1_var.get()
+                if len(password) == 0:
+                    strength_label.configure(text="", foreground="black")
+                elif len(password) < 8:
+                    strength_label.configure(text="⚠️ Weak: Too short (minimum 8 characters)", foreground="red")
+                elif len(password) < 12:
+                    strength_label.configure(text="🟡 Medium: Consider longer password", foreground="orange")
+                else:
+                    has_upper = any(c.isupper() for c in password)
+                    has_lower = any(c.islower() for c in password)
+                    has_digit = any(c.isdigit() for c in password)
+                    has_special = any(c in "!@#$%^&*()-_=+[]{}|;:,.<>?" for c in password)
+                    
+                    if has_upper and has_lower and has_digit and has_special:
+                        strength_label.configure(text="✅ Strong: Good password!", foreground="green")
+                    else:
+                        strength_label.configure(text="🟡 Medium: Add uppercase, numbers, symbols", foreground="orange")
+            
+            password1_var.trace_add("write", lambda *args: check_password_strength())
+        
+        # Buttons frame
+        button_frame = ttk.Frame(main_frame, style='Solid.TFrame')
+        button_frame.pack(fill=tk.X)
+        
+        def validate_and_proceed():
+            nonlocal result_password
+            password1 = password1_var.get()
+            
+            if not password1:
+                messagebox.showwarning("Invalid Input", "Please enter a password")
+                password1_entry.focus()
+                return
+            
+            if confirm_password:
+                password2 = password2_var.get()
+                if password1 != password2:
+                    messagebox.showerror("Password Mismatch", "Passwords do not match!\nPlease try again.")
+                    password2_entry.delete(0, tk.END)
+                    password2_entry.focus()
+                    return
+                
+                if len(password1) < 8:
+                    result = messagebox.askyesno("Weak Password", 
+                                               "Your password is shorter than 8 characters.\n"
+                                               "This may not be secure enough.\n\n"
+                                               "Do you want to use it anyway?")
+                    if not result:
+                        password1_entry.focus()
+                        return
+            
+            result_password = password1
+            dialog.destroy()
+        
+        def cancel_dialog():
+            nonlocal result_password
+            result_password = None
+            dialog.destroy()
+        
+        # OK button
+        ok_btn = ttk.Button(button_frame, text="OK", command=validate_and_proceed, style='Solid.TButton')
+        ok_btn.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # Cancel button
+        cancel_btn = ttk.Button(button_frame, text="Cancel", command=cancel_dialog, style='Solid.TButton')
+        cancel_btn.pack(side=tk.LEFT)
+        
+        # Generate password button (only for encryption)
+        if confirm_password:
+            generate_btn = ttk.Button(button_frame, text="Generate", 
+                                    command=lambda: self.insert_generated_password(password1_var, password2_var),
+                                    style='Solid.TButton')
+            generate_btn.pack(side=tk.RIGHT)
+        
+        # Focus and keyboard bindings
+        password1_entry.focus()
+        dialog.bind('<Escape>', lambda e: cancel_dialog())
+        dialog.bind('<Return>', lambda e: validate_and_proceed())
+        
+        # Wait for dialog to close
+        dialog.wait_window()
+        
+        return result_password
+    
+    def insert_generated_password(self, password1_var, password2_var):
+        """Insert generated password into both fields"""
+        try:
+            import string
+            characters = string.ascii_letters + string.digits + "!@#$%^&*()-_=+"
+            password = ''.join(secrets.choice(characters) for _ in range(16))
+            
+            password1_var.set(password)
+            password2_var.set(password)
+            
+            #messagebox.showinfo("Generated", "Strong password has been generated and inserted!")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to generate password: {str(e)}")
             
     def clear_all(self):
         """Clear all text fields"""
@@ -1281,8 +1392,8 @@ professional cryptographic systems work."""
 
 ENCRYPTION TAB:
 1. Select encryption algorithm
-2. Enter password or generate strong password
-3. Enter text and click Encrypt/Decrypt
+2. Enter text and click Encrypt/Decrypt  
+3. Password dialog opens automatically
 4. Salt is automatically generated and embedded
 5. Copy result or send via email
 
@@ -1311,9 +1422,6 @@ KEYBOARD SHORTCUTS:
 • Ctrl+C / Cmd+C: Copy
 • Ctrl+V / Cmd+V: Paste
 
-THEMES:
-• View → Toggle Dark Mode
-
 SECURITY:
 • All operations use memory only
 • Salt embedded in encrypted data
@@ -1334,7 +1442,6 @@ Features:
 • Modern symmetric encryption
 • Digital signatures
 • Key exchange protocols
-• Dark/Light themes
 • Cross-platform support
 
 Author: Robert Tulke
