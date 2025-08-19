@@ -33,7 +33,7 @@ security best practices, no formal security audit has been performed.
 For production use, always install the 'cryptography' library and
 consider professional security review.
 
-Copyright (c) 2025 Robert Tulke. All rights reserved.
+Copyleft 2025 Robert Tulke
 """
 
 __version__ = "2.0"
