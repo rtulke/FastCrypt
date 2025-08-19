@@ -2,6 +2,9 @@
 
 A modern, cross-platform encryption application with advanced cryptographic features, built with Python and Tkinter.
 
+![Example](/fastcrypt.png)
+
+
 ## Features
 
 ### Core Encryption
